@@ -633,7 +633,7 @@ namespace makerbit {
       if (!espState) {
         return false;
       }
-
+      basic.pause(0); // Allow background processing to happen, even if called in a tight loop
       return espState.connectionStatus >= status;
     }
 

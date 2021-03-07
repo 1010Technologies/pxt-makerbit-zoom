@@ -125,26 +125,36 @@ namespace makerbit {
       }
     }
 
-    function applyTopicUpdate(topic: string, value: string): void {
-      if (topic.indexOf(CONNECTION_TOPIC) == 0) {
+    function applyTopicUpdate(topic: string, value: string): boolean {
+
+      if (topic.indexOf(CONNECTION_TOPIC) === 0) {
         espState.connectionStatus = parseInt(getFirstToken(value));
 
-      } else if (topic.indexOf(ERROR_TOPIC) == 0) {
+      } else if (topic.indexOf(ERROR_TOPIC) === 0) {
         espState.lastError = parseInt(getFirstToken(value));
 
-      } else if (topic.indexOf(DEVICE_TOPIC) == 0) {
+      } else if (topic.indexOf(DEVICE_TOPIC) === 0) {
         espState.device = getFirstToken(value);
 
-      } else if (topic.indexOf(TRANSMISSION_CONTROL_TOPIC) == 0) {
-        espState.transmissionControl = value == "1";
+      } else if (topic.indexOf(TRANSMISSION_CONTROL_TOPIC) === 0) {
+        espState.transmissionControl = value === "1";
+      }
+
+      let isExpectedTopic = false;
+
+      if (topic.indexOf("$ESP/") === 0) {
+        isExpectedTopic = true;
       }
 
       espState.subscriptions.forEach((subscription) => {
         if (topic.indexOf(subscription.name) == 0) {
+          isExpectedTopic = true;
           subscription.setValue(value);
           control.raiseEvent(MAKERBIT_ID_TOPIC, MAKERBIT_TOPIC_EVT_RECV);
         }
       });
+
+      return isExpectedTopic;
     }
 
     function splitSerialMessage(message: string, removeTransmissionIdFromContent: boolean): string[] {
@@ -184,9 +194,9 @@ namespace makerbit {
     function processSerialMessage(message: string): void {
       const data = splitSerialMessage(message, espState.transmissionControl);
 
-      applyTopicUpdate(data[0], data[1]);
+      const isExpectedTopic = applyTopicUpdate(data[0], data[1]);
 
-      if (espState.transmissionControl) {
+      if (isExpectedTopic && espState.transmissionControl) {
         serialWriteString("ack ");
         serialWriteString(data[2]);
         serialWriteString("\n");

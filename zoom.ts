@@ -38,9 +38,6 @@ namespace makerbit {
     const ERROR_TOPIC = "$ESP/error";
     const TRANSMISSION_CONTROL_TOPIC = "$ESP/tc";
 
-    // const MAKERBIT_ID_TOPIC = 23567;
-    // const MAKERBIT_TOPIC_EVT_RECV = 2355;
-
     let espState: EspState = undefined;
 
     let serialWriteString = (text: string) => {
@@ -102,15 +99,22 @@ namespace makerbit {
       }
     }
 
-    function notificationLoop(subscriptions: Subscription[]): void {
+    function notificationLoop(): void {
+      let lastPollForConnectionsStatus = 0;
+
       while (true) {
         basic.pause(10);
-        //control.waitForEvent(MAKERBIT_ID_TOPIC, MAKERBIT_TOPIC_EVT_RECV);
 
-        subscriptions.forEach((subscription) => {
+        espState.subscriptions.forEach((subscription) => {
           subscription.notifyUpdate();
           basic.pause(0);
         });
+
+        const now = control.millis();
+        if (now < lastPollForConnectionsStatus || now > lastPollForConnectionsStatus + 62000) {
+          lastPollForConnectionsStatus = now;
+          serialWriteString("connection-status\n");
+        }
       }
     }
 
@@ -150,7 +154,6 @@ namespace makerbit {
         if (topic.indexOf(subscription.name) == 0) {
           isExpectedTopic = true;
           subscription.setValue(value);
-          //control.raiseEvent(MAKERBIT_ID_TOPIC, MAKERBIT_TOPIC_EVT_RECV);
         }
       });
 
@@ -372,36 +375,41 @@ namespace makerbit {
               espState.intervalIdDevice,
               control.IntervalMode.Interval
             );
+
+            // poll for intial connection status
+            espState.intervalIdConnection = control.setInterval(
+              () => {
+                if (espState.connectionStatus <= ZoomConnectionStatus.NONE) {
+                  serialWriteString("connection-status\n");
+                } else {
+                  control.clearInterval(
+                    espState.intervalIdConnection,
+                    control.IntervalMode.Interval
+                  );
+                  /*
+                                    // poll for connection status in regulare intervals
+                                    control.setInterval(
+                                      () => {
+                                        serialWriteString("connection-status\n");
+                                      },
+                                      62 * 1000,
+                                      control.IntervalMode.Interval
+                                    );
+                                    */
+                }
+              },
+              850,
+              control.IntervalMode.Interval
+            );
           }
         },
         300,
         control.IntervalMode.Interval
       );
 
-      // poll for intial connection status
-      espState.intervalIdConnection = control.setInterval(
-        () => {
-          if (espState.connectionStatus <= ZoomConnectionStatus.NONE) {
-            serialWriteString("connection-status\n");
-          } else {
-            control.clearInterval(
-              espState.intervalIdConnection,
-              control.IntervalMode.Interval
-            );
-          }
-        },
-        850,
-        control.IntervalMode.Interval
-      );
 
-      // poll for connection status in regulare intervals
-      control.setInterval(
-        () => {
-          serialWriteString("connection-status\n");
-        },
-        62 * 1000,
-        control.IntervalMode.Interval
-      );
+
+
     }
 
     /**
@@ -480,13 +488,9 @@ namespace makerbit {
           transmissionControl: false,
         };
 
-        control.runInParallel(() => {
-          readSerialMessages();
-        });
+        control.runInParallel(readSerialMessages);
 
-        control.runInParallel(() => {
-          notificationLoop(espState.subscriptions);
-        });
+        control.runInParallel(notificationLoop);
 
         // Always notify connection status NONE in the beginning
         applyTopicUpdate(CONNECTION_TOPIC, "" + ZoomConnectionStatus.NONE);

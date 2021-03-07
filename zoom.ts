@@ -205,7 +205,11 @@ namespace makerbit {
               basic.pause(0);
               message = "";
             } else {
-              message = message.concat(String.fromCharCode(r));
+              if (message.length < 64) {
+                message = message.concat(String.fromCharCode(r));
+              } else {
+                message = "";
+              }
             }
           }
         }

@@ -38,8 +38,8 @@ namespace makerbit {
     const ERROR_TOPIC = "$ESP/error";
     const TRANSMISSION_CONTROL_TOPIC = "$ESP/tc";
 
-    const MAKERBIT_ID_TOPIC = 23567;
-    const MAKERBIT_TOPIC_EVT_RECV = 2355;
+    // const MAKERBIT_ID_TOPIC = 23567;
+    // const MAKERBIT_TOPIC_EVT_RECV = 2355;
 
     let espState: EspState = undefined;
 
@@ -104,13 +104,13 @@ namespace makerbit {
 
     function notificationLoop(subscriptions: Subscription[]): void {
       while (true) {
-        control.waitForEvent(MAKERBIT_ID_TOPIC, MAKERBIT_TOPIC_EVT_RECV);
+        basic.pause(10);
+        //control.waitForEvent(MAKERBIT_ID_TOPIC, MAKERBIT_TOPIC_EVT_RECV);
 
         subscriptions.forEach((subscription) => {
           subscription.notifyUpdate();
+          basic.pause(0);
         });
-
-        basic.pause(1);
       }
     }
 
@@ -150,7 +150,7 @@ namespace makerbit {
         if (topic.indexOf(subscription.name) == 0) {
           isExpectedTopic = true;
           subscription.setValue(value);
-          control.raiseEvent(MAKERBIT_ID_TOPIC, MAKERBIT_TOPIC_EVT_RECV);
+          //control.raiseEvent(MAKERBIT_ID_TOPIC, MAKERBIT_TOPIC_EVT_RECV);
         }
       });
 

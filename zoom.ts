@@ -67,17 +67,16 @@ namespace makerbit {
     }
 
     class Subscription {
-      name: string;
+      topic: string;
+      value: string;
       handler: (value: string | number | Image) => void;
 
-      value: string;
-
       constructor(
-        name: string,
+        topic: string,
         handler: (value: string | number | Image) => void
       ) {
         this.value = "";
-        this.name = normalize(name);
+        this.topic = topic;
         this.handler = handler;
       }
 
@@ -89,7 +88,7 @@ namespace makerbit {
         if (!this.value.isEmpty()) {
           let decodedValue: string | number | Image = this.value;
 
-          if (this.name == LED_TOPIC) {
+          if (this.topic == LED_TOPIC) {
             decodedValue = decodeImage(parseInt(this.value));
           }
 
@@ -131,27 +130,27 @@ namespace makerbit {
 
     function applyTopicUpdate(topic: string, value: string): boolean {
 
-      if (topic.indexOf(CONNECTION_TOPIC) === 0) {
-        espState.connectionStatus = parseInt(getFirstToken(value));
-
-      } else if (topic.indexOf(ERROR_TOPIC) === 0) {
-        espState.lastError = parseInt(getFirstToken(value));
-
-      } else if (topic.indexOf(DEVICE_TOPIC) === 0) {
-        espState.device = getFirstToken(value);
-
-      } else if (topic.indexOf(TRANSMISSION_CONTROL_TOPIC) === 0) {
-        espState.transmissionControl = value === "1";
-      }
-
       let isExpectedTopic = false;
 
       if (topic.indexOf("$ESP/") === 0) {
         isExpectedTopic = true;
+
+        if (topic === CONNECTION_TOPIC) {
+          espState.connectionStatus = parseInt(getFirstToken(value));
+
+        } else if (topic === ERROR_TOPIC) {
+          espState.lastError = parseInt(getFirstToken(value));
+
+        } else if (topic === DEVICE_TOPIC) {
+          espState.device = getFirstToken(value);
+
+        } else if (topic === TRANSMISSION_CONTROL_TOPIC) {
+          espState.transmissionControl = value === "1";
+        }
       }
 
       espState.subscriptions.forEach((subscription) => {
-        if (topic.indexOf(subscription.name) == 0) {
+        if (topic === subscription.topic) {
           isExpectedTopic = true;
           subscription.setValue(value);
         }

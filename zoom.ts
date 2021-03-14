@@ -12,6 +12,7 @@ const enum ZoomConnectionStatus {
 }
 
 namespace makerbit {
+
   export namespace zoom {
     interface EspState {
       subscriptions: Subscription[];
@@ -52,6 +53,7 @@ namespace makerbit {
     }
 
     function publish(name: string, value: string): void {
+      // TODO join string first
       serialWriteString("pub ");
       serialWriteString(normalize(name));
       serialWriteString(' "');
@@ -61,6 +63,7 @@ namespace makerbit {
     }
 
     function subscribe(topic: string): void {
+      // TODO join string first
       serialWriteString("sub ");
       serialWriteString(topic);
       serialWriteString('"\n');
@@ -98,23 +101,10 @@ namespace makerbit {
       }
     }
 
-    function notificationLoop(): void {
-      let lastPollForConnectionsStatus = 0;
-
-      while (true) {
-        basic.pause(10);
-
-        espState.subscriptions.forEach((subscription) => {
-          subscription.notifyUpdate();
-          basic.pause(0);
-        });
-
-        const now = control.millis();
-        if (now < lastPollForConnectionsStatus || now > lastPollForConnectionsStatus + 62000) {
-          lastPollForConnectionsStatus = now;
-          serialWriteString("connection-status\n");
-        }
-      }
+    function notifySubscriptionUpdates(): void {
+      espState.subscriptions.forEach((subscription) => {
+        subscription.notifyUpdate();
+      });
     }
 
     function getFirstToken(data: string): string {
@@ -199,6 +189,7 @@ namespace makerbit {
       const isExpectedTopic = applyTopicUpdate(data[0], data[1]);
 
       if (isExpectedTopic && espState.transmissionControl) {
+        // TODO join string first
         serialWriteString("ack ");
         serialWriteString(data[2]);
         serialWriteString("\n");
@@ -214,7 +205,6 @@ namespace makerbit {
           if (r != -1) {
             if (r == Delimiters.NewLine) {
               processSerialMessage(message);
-              basic.pause(0);
               message = "";
             } else {
               if (message.length < 64) {
@@ -356,6 +346,7 @@ namespace makerbit {
     }
 
     function setWiFi() {
+      // TODO join string first
       serialWriteString('wifi "');
       serialWriteString(espState.ssid);
       serialWriteString('" "');
@@ -363,52 +354,38 @@ namespace makerbit {
       serialWriteString('"\n');
     }
 
-    function configureSubscriptionsAndPolling(): void {
+    function getDeviceAndConnectionStatus(): void {
       // poll for device version
-      espState.intervalIdDevice = control.setInterval(
+      espState.intervalIdDevice = background.schedule(
         () => {
           if (espState.device.isEmpty()) {
             serialWriteString("device\n");
           } else {
-            control.clearInterval(
+            background.clear(
               espState.intervalIdDevice,
-              control.IntervalMode.Interval
+              background.Mode.Repeat
             );
 
             // poll for intial connection status
-            espState.intervalIdConnection = control.setInterval(
+            espState.intervalIdConnection = background.schedule(
               () => {
                 if (espState.connectionStatus <= ZoomConnectionStatus.NONE) {
                   serialWriteString("connection-status\n");
                 } else {
-                  control.clearInterval(
+                  background.clear(
                     espState.intervalIdConnection,
-                    control.IntervalMode.Interval
+                    background.Mode.Repeat
                   );
-                  /*
-                                    // poll for connection status in regulare intervals
-                                    control.setInterval(
-                                      () => {
-                                        serialWriteString("connection-status\n");
-                                      },
-                                      62 * 1000,
-                                      control.IntervalMode.Interval
-                                    );
-                                    */
                 }
               },
               850,
-              control.IntervalMode.Interval
+              background.Mode.Repeat
             );
           }
         },
         300,
-        control.IntervalMode.Interval
+        background.Mode.Repeat
       );
-
-
-
-
     }
 
     /**
@@ -489,12 +466,16 @@ namespace makerbit {
 
         control.runInParallel(readSerialMessages);
 
-        control.runInParallel(notificationLoop);
+        background.schedule(notifySubscriptionUpdates, 20, background.Mode.Repeat);
+
+        background.schedule(() => {
+          serialWriteString("connection-status\n");
+        }, 62000, background.Mode.Repeat);
 
         // Always notify connection status NONE in the beginning
         applyTopicUpdate(CONNECTION_TOPIC, "" + ZoomConnectionStatus.NONE);
 
-        configureSubscriptionsAndPolling();
+        getDeviceAndConnectionStatus();
       }
 
       espState.espRX = espRX;

@@ -26,8 +26,8 @@ namespace makerbit {
       espTX: DigitalPin;
       ssid: string;
       wiFiPassword: string;
-      intervalIdDevice: number;
-      intervalIdConnection: number;
+      obtainDeviceJobId: number;
+      obtainConnectionStatusJobId: number;
       transmissionControl: boolean;
     }
 
@@ -356,26 +356,20 @@ namespace makerbit {
 
     function getDeviceAndConnectionStatus(): void {
       // poll for device version
-      espState.intervalIdDevice = background.schedule(
+      espState.obtainDeviceJobId = background.schedule(
         () => {
           if (espState.device.isEmpty()) {
             serialWriteString("device\n");
           } else {
-            background.clear(
-              espState.intervalIdDevice,
-              background.Mode.Repeat
-            );
+            background.remove(espState.obtainDeviceJobId);
 
             // poll for intial connection status
-            espState.intervalIdConnection = background.schedule(
+            espState.obtainConnectionStatusJobId = background.schedule(
               () => {
                 if (espState.connectionStatus <= ZoomConnectionStatus.NONE) {
                   serialWriteString("connection-status\n");
                 } else {
-                  background.clear(
-                    espState.intervalIdConnection,
-                    background.Mode.Repeat
-                  );
+                  background.remove(espState.obtainConnectionStatusJobId);
                 }
               },
               850,
@@ -459,8 +453,8 @@ namespace makerbit {
           espTX: espTX,
           ssid: "",
           wiFiPassword: "",
-          intervalIdDevice: 0,
-          intervalIdConnection: 0,
+          obtainDeviceJobId: 0,
+          obtainConnectionStatusJobId: 0,
           transmissionControl: false,
         };
 

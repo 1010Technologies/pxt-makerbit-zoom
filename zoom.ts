@@ -53,20 +53,13 @@ namespace makerbit {
     }
 
     function publish(name: string, value: string): void {
-      // TODO join string first
-      serialWriteString("pub ");
-      serialWriteString(normalize(name));
-      serialWriteString(' "');
-      serialWriteString("" + value);
-      serialWriteString('"');
-      serialWriteString("\n");
+      const msg = ["pub ", normalize(name), ' "', "" + value, '"\n'].join("");
+      serialWriteString(msg);
     }
 
     function subscribe(topic: string): void {
-      // TODO join string first
-      serialWriteString("sub ");
-      serialWriteString(topic);
-      serialWriteString('"\n');
+      const msg = ["sub ", topic, '"\n'].join("");
+      serialWriteString(msg);
     }
 
     class Subscription {
@@ -189,10 +182,8 @@ namespace makerbit {
       const isExpectedTopic = applyTopicUpdate(data[0], data[1]);
 
       if (isExpectedTopic && espState.transmissionControl) {
-        // TODO join string first
-        serialWriteString("ack ");
-        serialWriteString(data[2]);
-        serialWriteString("\n");
+        const msg = ["ack ", data[2], '\n'].join("");
+        serialWriteString(msg);
       }
     }
 
@@ -346,12 +337,8 @@ namespace makerbit {
     }
 
     function setWiFi() {
-      // TODO join string first
-      serialWriteString('wifi "');
-      serialWriteString(espState.ssid);
-      serialWriteString('" "');
-      serialWriteString(espState.wiFiPassword);
-      serialWriteString('"\n');
+      const msg = ['wifi "', espState.ssid, '" "', espState.wiFiPassword, '"\n'].join("");
+      serialWriteString(msg);
     }
 
     function getDeviceAndConnectionStatus(): void {
@@ -630,11 +617,8 @@ namespace makerbit {
     }
 
     function setMqttApplicationPrefix() {
-      serialWriteString("mqtt-app ");
-      serialWriteString(espState.meeting);
-      serialWriteString("/");
-      serialWriteString(espState.room);
-      serialWriteString("\n");
+      const msg = ["mqtt-app ", espState.meeting, "/", espState.room, "\n"].join("");
+      serialWriteString(msg);
     }
 
     function encodeImage(image: Image): number {

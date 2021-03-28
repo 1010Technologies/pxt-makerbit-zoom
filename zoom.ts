@@ -42,7 +42,7 @@ namespace makerbit {
     let espState: EspState = undefined;
 
     let serialWriteString = (text: string) => {
-      serial.write(text);
+      serial.writeStringBlocking(text);
     };
 
     function normalize(value: string): string {

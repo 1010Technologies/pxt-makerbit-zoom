@@ -416,6 +416,8 @@ namespace makerbit {
 
       if (!espState || espState.espRX != espRX || espState.espTX != espTX) {
         serial.setRxBufferSize(32);
+        serial.setTxBufferSize(32);
+
         serial.redirect(
           espRX as number,
           espTX as number,

@@ -433,7 +433,7 @@ namespace makerbit {
         espState = {
           subscriptions: [],
           lastError: 0,
-          meeting: "" + randint(1111111111, 9999999999),
+          meeting: "" + randint(111111111, 999999999),
           room: "1",
           connectionStatus: ZoomConnectionStatus.NONE,
           notifiedConnectionStatus: -1,

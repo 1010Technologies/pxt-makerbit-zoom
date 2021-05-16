@@ -12,8 +12,13 @@ const enum ZoomConnectionStatus {
 }
 
 namespace makerbit {
-
   export namespace zoom {
+    interface Clock {
+      time: string;
+      date: string;
+      lastTimeUpdate: number;
+    }
+
     interface EspState {
       subscriptions: Subscription[];
       lastError: number;
@@ -29,6 +34,16 @@ namespace makerbit {
       obtainDeviceJobId: number;
       obtainConnectionStatusJobId: number;
       transmissionControl: boolean;
+      clock: Clock;
+    }
+
+    export namespace tz {
+      // https://github.com/esp8266/Arduino/blob/master/cores/esp8266/TZ.h
+      export const Europe_Berlin = "CET-1CEST,M3.5.0,M10.5.0/3";
+      export const America_Los_Angeles = "PST8PDT,M3.2.0,M11.1.0";
+      export const America_New_York = "TZ_America_New_York";
+      export const Asia_Tokyo = "JST-9";
+      export const UTC = "UTC0"; // Universal Time Coordinated
     }
 
     const STRING_TOPIC = "s_";
@@ -37,6 +52,8 @@ namespace makerbit {
     const CONNECTION_TOPIC = "$ESP/connection";
     const DEVICE_TOPIC = "$ESP/device";
     const ERROR_TOPIC = "$ESP/error";
+    const TIME_TOPIC = "$ESP/time";
+    const DATE_TOPIC = "$ESP/date";
     const TRANSMISSION_CONTROL_TOPIC = "$ESP/tc";
 
     let espState: EspState = undefined;
@@ -105,14 +122,12 @@ namespace makerbit {
 
       if (spaceIdx < 0) {
         return data;
-      }
-      else {
+      } else {
         return data.substr(0, spaceIdx);
       }
     }
 
     function applyTopicUpdate(topic: string, value: string): boolean {
-
       let isExpectedTopic = false;
 
       if (topic.indexOf("$ESP/") === 0) {
@@ -120,15 +135,26 @@ namespace makerbit {
 
         if (topic === CONNECTION_TOPIC) {
           espState.connectionStatus = parseInt(getFirstToken(value));
-
         } else if (topic === ERROR_TOPIC) {
           espState.lastError = parseInt(getFirstToken(value));
-
         } else if (topic === DEVICE_TOPIC) {
           espState.device = getFirstToken(value);
-
         } else if (topic === TRANSMISSION_CONTROL_TOPIC) {
           espState.transmissionControl = value === "1";
+        } else if (topic === TIME_TOPIC || topic === DATE_TOPIC) {
+          if (!espState.clock) {
+            espState.clock = {
+              time: "00:00:00",
+              date: "0000-00-00",
+              lastTimeUpdate: 0,
+            };
+          }
+          if (topic === TIME_TOPIC) {
+            espState.clock.time = value;
+            espState.clock.lastTimeUpdate = control.millis();
+          } else {
+            espState.clock.date = value;
+          }
         }
       }
 
@@ -142,7 +168,10 @@ namespace makerbit {
       return isExpectedTopic;
     }
 
-    function splitSerialMessage(message: string, removeTransmissionIdFromContent: boolean): string[] {
+    function splitSerialMessage(
+      message: string,
+      removeTransmissionIdFromContent: boolean
+    ): string[] {
       const contentIdx = message.indexOf(" ");
       const idIdx = message.indexOf(" ", message.length - 4);
 
@@ -161,20 +190,20 @@ namespace makerbit {
       if (hasId && removeTransmissionIdFromContent) {
         data.push(message.substr(contentIdx + 1, idIdx - contentIdx - 1));
       } else {
-        data.push(message.substr(contentIdx + 1, message.length - contentIdx - 1));
+        data.push(
+          message.substr(contentIdx + 1, message.length - contentIdx - 1)
+        );
       }
 
       // Add transmission ID
       if (hasId) {
-        data.push(message.substr(idIdx + 1, 3))
-      }
-      else {
+        data.push(message.substr(idIdx + 1, 3));
+      } else {
         data.push("0");
       }
 
       return data;
     }
-
 
     function processSerialMessage(message: string): void {
       const data = splitSerialMessage(message, espState.transmissionControl);
@@ -182,7 +211,7 @@ namespace makerbit {
       const isExpectedTopic = applyTopicUpdate(data[0], data[1]);
 
       if (isExpectedTopic && espState.transmissionControl) {
-        const msg = ["ack ", data[2], '\n'].join("");
+        const msg = ["ack ", data[2], "\n"].join("");
         serialWriteString(msg);
       }
     }
@@ -273,7 +302,7 @@ namespace makerbit {
       handler: (receivedNumber: number) => void
     ): void {
       autoConnectToESP();
-      const topic = NUMBER_TOPIC + normalize(channel)
+      const topic = NUMBER_TOPIC + normalize(channel);
       espState.subscriptions.push(new Subscription(topic, handler));
       subscribe(topic);
     }
@@ -291,7 +320,7 @@ namespace makerbit {
       handler: (receivedString: string) => void
     ): void {
       autoConnectToESP();
-      const topic = STRING_TOPIC + normalize(channel)
+      const topic = STRING_TOPIC + normalize(channel);
       espState.subscriptions.push(new Subscription(topic, handler));
       subscribe(topic);
     }
@@ -320,6 +349,77 @@ namespace makerbit {
       espState.subscriptions.push(new Subscription(CONNECTION_TOPIC, handler));
     }
 
+    function getDate(timezone: string): void {
+      autoConnectToESP();
+      const msg = ["date ", timezone, "\n"].join("");
+      serialWriteString(msg);
+    }
+
+    function refreshTimeNetwork(timezone: string): void {
+      autoConnectToESP();
+      const msg = ["time ", timezone, "\n"].join("");
+      serialWriteString(msg);
+    }
+
+    function toSeconds(timeString: string): number {
+      const time = timeString.split(":");
+      return (
+        parseInt(time[0]) * 3600 + parseInt(time[1]) * 60 + parseInt(time[2])
+      );
+    }
+
+    function toTwoDigitString(value: number): string {
+      if (value < 10) {
+        return "0" + value;
+      } else {
+        return "" + value;
+      }
+    }
+
+    function toTime(timeInSeconds: number): string {
+      const seconds = timeInSeconds % 60;
+      const minutes = Math.idiv(timeInSeconds - seconds, 60) % 60;
+      const hours = Math.idiv(timeInSeconds - seconds - minutes * 60, 3600);
+      return [
+        toTwoDigitString(hours),
+        toTwoDigitString(minutes),
+        toTwoDigitString(seconds),
+      ].join(":");
+    }
+
+    function calculateTime(): string {
+      if (!espState || !espState.clock) {
+        return "00:00:00";
+      }
+
+      const refSecs = toSeconds(espState.clock.time);
+      const deltaUpdateSecs = Math.idiv(
+        control.millis() - espState.clock.lastTimeUpdate,
+        1000
+      );
+      const newSecs = (refSecs + deltaUpdateSecs) % (24 * 60 * 60);
+      return toTime(newSecs);
+    }
+
+    /**
+     * Returns the time.
+     */
+    //% subcategory="Zoom"
+    //% blockId=makerbit_zoom_time
+    //% block="time %timezone"
+    //% weight=56
+    export function getTime(timeZone: string): string {
+      autoConnectToESP();
+      if (
+        !espState.clock &&
+        espState.connectionStatus >= ZoomConnectionStatus.INTERNET
+      ) {
+        refreshTimeNetwork(timeZone);
+        basic.pause(1000);
+      }
+      return calculateTime();
+    }
+
     /**
      * Configures the WiFi connection.
      * @param ssid network name
@@ -337,7 +437,13 @@ namespace makerbit {
     }
 
     function setWiFi() {
-      const msg = ['wifi "', espState.ssid, '" "', espState.wiFiPassword, '"\n'].join("");
+      const msg = [
+        'wifi "',
+        espState.ssid,
+        '" "',
+        espState.wiFiPassword,
+        '"\n',
+      ].join("");
       serialWriteString(msg);
     }
 
@@ -445,15 +551,24 @@ namespace makerbit {
           obtainDeviceJobId: 0,
           obtainConnectionStatusJobId: 0,
           transmissionControl: false,
+          clock: undefined,
         };
 
         control.runInParallel(readSerialMessages);
 
-        background.schedule(notifySubscriptionUpdates, 20, background.Mode.Repeat);
+        background.schedule(
+          notifySubscriptionUpdates,
+          20,
+          background.Mode.Repeat
+        );
 
-        background.schedule(() => {
-          serialWriteString("connection-status\n");
-        }, 62000, background.Mode.Repeat);
+        background.schedule(
+          () => {
+            serialWriteString("connection-status\n");
+          },
+          62000,
+          background.Mode.Repeat
+        );
 
         // Always notify connection status NONE in the beginning
         applyTopicUpdate(CONNECTION_TOPIC, "" + ZoomConnectionStatus.NONE);
@@ -569,7 +684,10 @@ namespace makerbit {
     //% weight=80
     export function sendNumberToChannel(value: number, channel?: string): void {
       autoConnectToESP();
-      publish(NUMBER_TOPIC + normalize(channel), "" + Math.roundWithPrecision(value, 2));
+      publish(
+        NUMBER_TOPIC + normalize(channel),
+        "" + Math.roundWithPrecision(value, 2)
+      );
     }
 
     /**
@@ -584,7 +702,6 @@ namespace makerbit {
       autoConnectToESP();
       publish(STRING_TOPIC + normalize(channel), value);
     }
-
 
     /**
      * Sets the meeting and room for internet communications. A micro:bit can be connected to one room at any time.
@@ -619,7 +736,13 @@ namespace makerbit {
     }
 
     function setMqttApplicationPrefix() {
-      const msg = ["mqtt-app ", espState.meeting, "/", espState.room, "\n"].join("");
+      const msg = [
+        "mqtt-app ",
+        espState.meeting,
+        "/",
+        espState.room,
+        "\n",
+      ].join("");
       serialWriteString(msg);
     }
 

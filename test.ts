@@ -15,10 +15,12 @@ makerbit.zoom.sendScreenshot();
 makerbit.zoom.sendNumberToChannel(23, "compass");
 makerbit.zoom.sendStringToChannel("Ernie", "name");
 
-makerbit.zoom.onReceivedNumber((value: number) => {});
-makerbit.zoom.onReceivedString((value: string) => {});
-makerbit.zoom.onReceivedScreenshot((screenshot: Image) => {});
-makerbit.zoom.onReceivedNumberInChannel("compass", (value: number) => {});
-makerbit.zoom.onReceivedStringInChannel("name", (value: string) => {});
-makerbit.zoom.onConnectionStatus(() => {});
-makerbit.zoom.onError(() => {});
+makerbit.zoom.onReceivedNumber((value: number) => { });
+makerbit.zoom.onReceivedString((value: string) => { });
+makerbit.zoom.onReceivedScreenshot((screenshot: Image) => { });
+makerbit.zoom.onReceivedNumberInChannel("compass", (value: number) => { });
+makerbit.zoom.onReceivedStringInChannel("name", (value: string) => { });
+makerbit.zoom.onConnectionStatus(() => { });
+makerbit.zoom.onError(() => { });
+
+makerbit.zoom.getTime(makerbit.zoom.tz.Europe_Berlin);

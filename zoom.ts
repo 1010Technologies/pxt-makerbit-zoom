@@ -11,6 +11,36 @@ const enum ZoomConnectionStatus {
   MEETING = 4,
 }
 
+const enum TimeZone {
+  //% block="UTC"
+  UTC,
+  //% block="America Los Angeles"
+  America_Los_Angeles,
+  //% block="Europe Berlin"
+  Europe_Berlin,
+  America_New_York,
+  Asia_Tokyo
+}
+
+/**
+  * Turns a time zone id into a string that describes the timezone.
+  */
+//% blockId=makerbit_helper_timezone
+//% block="%timezone"
+//% blockHidden=true
+export function timezone(timezone: TimeZone): string {
+  // https://github.com/esp8266/Arduino/blob/master/cores/esp8266/TZ.h
+  switch (timezone) {
+    case TimeZone.America_Los_Angeles: return "PST8PDT,M3.2.0,M11.1.0";
+    case TimeZone.Europe_Berlin: return "CET-1CEST,M3.5.0,M10.5.0/3";
+    case TimeZone.America_New_York: return "TZ_America_New_York";
+    case TimeZone.Asia_Tokyo: return "JST-9";
+    default:
+      return "UTC0";
+  }
+}
+
+
 //% color=#0fbc11 icon="\u272a" block="MakerBit"
 //% category="MakerBit"
 namespace makerbit {
@@ -408,7 +438,7 @@ namespace makerbit {
      */
     //% subcategory="Zoom"
     //% blockId=makerbit_zoom_time
-    //% block="time %timezone"
+    //% block="time %timezone=makerbit_helper_timezone"
     //% weight=56
     export function getTime(timeZone: string): string {
       autoConnectToESP();

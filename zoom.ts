@@ -11,6 +11,8 @@ const enum ZoomConnectionStatus {
   MEETING = 4,
 }
 
+//% color=#0fbc11 icon="\u272a" block="MakerBit"
+//% category="MakerBit"
 namespace makerbit {
   export namespace zoom {
     interface Clock {

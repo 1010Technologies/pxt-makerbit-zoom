@@ -7,10 +7,9 @@
         "core": "*",
         "serial-read": "github:philipphenkel/pxt-serial-read#v0.1.3",
         "is-simulator": "github:philipphenkel/pxt-is-simulator#v0.0.2",
-        "background": "github:1010Technologies/pxt-makerbit-background#v0.0.6"
+        "background": "github:1010Technologies/pxt-makerbit-background#v0.0.7"
     },
     "files": [
-        "namespace.ts",
         "README.md",
         "zoom.ts"
     ],

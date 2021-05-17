@@ -439,10 +439,10 @@ namespace makerbit {
     /**
      * Returns the time.
      */
-    //% subcategory="Zoom"
+    //% subcategory="Time"
     //% blockId=makerbit_zoom_time
     //% block="time"
-    //% weight=56
+    //% weight=54
     export function getTime(): string {
       autoConnectToESP();
       initClock();
@@ -452,10 +452,10 @@ namespace makerbit {
     /**
      * Returns the date.
      */
-    //% subcategory="Zoom"
+    //% subcategory="Time"
     //% blockId=makerbit_zoom_date
     //% block="date"
-    //% weight=55
+    //% weight=53
     export function getDate(): string {
       autoConnectToESP();
       initClock();
@@ -487,12 +487,12 @@ namespace makerbit {
     /**
      * Sets the time zone with an offset from UTC.
      */
-    //% subcategory="Zoom"
+    //% subcategory="Time"
     //% blockId=makerbit_zoom_set_time_zone_with_utc_offset
     //% block="set time zone to UTC offset of %hours hours and %minutes minutes"
     //% hours.min=-12 hours.max=14
     //% minutes.min=0 minutes.max=59
-    //% weight=53
+    //% weight=56
     export function setTimeZoneWithUtcOffset(hours: number, minutes: number): void {
       setTimeZone(offsetToTimeZone(hours, minutes));
     }
@@ -501,10 +501,10 @@ namespace makerbit {
     /**
      * Sets the time zone.
      */
-    //% subcategory="Zoom"
+    //% subcategory="Time"
     //% blockId=makerbit_zoom_set_time_zone
     //% block="set time zone to %timezone=makerbit_helper_timezone"
-    //% weight=52
+    //% weight=55
     export function setTimeZone(timeZone: string): void {
       autoConnectToESP();
       initClock(timeZone);

@@ -28,7 +28,7 @@ const enum TimeZone {
 //% blockId=makerbit_helper_timezone
 //% block="%timezone"
 //% blockHidden=true
-export function timezone(timezone: TimeZone): string {
+function timezone(timezone: TimeZone): string {
   // https://github.com/esp8266/Arduino/blob/master/cores/esp8266/TZ.h
   switch (timezone) {
     case TimeZone.America_Los_Angeles: return "PST8PDT,M3.2.0,M11.1.0";

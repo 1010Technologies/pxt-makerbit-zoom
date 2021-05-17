@@ -433,7 +433,7 @@ namespace makerbit {
      */
     //% subcategory="Zoom"
     //% blockId=makerbit_zoom_time
-    //% block="time %timezone=makerbit_helper_timezone"
+    //% block="time in timezone %timezone=makerbit_helper_timezone"
     //% weight=56
     export function getTime(timeZone: string): string {
       autoConnectToESP();
@@ -473,20 +473,12 @@ namespace makerbit {
      */
     //% subcategory="Zoom"
     //% blockId=makerbit_zoom_time_offset
-    //% block="time %hours %minutes"
+    //% block="time with UTC offset of %hours hours and %minutes minutes"
     //% hours.min=-12 hours.max=14
     //% minutes.min=0 minutes.max=59
     //% weight=55
     export function getTimeWithUtcOffset(hours: number, minutes: number): string {
-      autoConnectToESP();
-      if (
-        !espState.clock &&
-        espState.connectionStatus >= ZoomConnectionStatus.INTERNET
-      ) {
-        refreshTimeNetwork(offsetToTimeZone(hours, minutes));
-        basic.pause(1000);
-      }
-      return calculateTime();
+      return getTime(offsetToTimeZone(hours, minutes));
     }
 
 

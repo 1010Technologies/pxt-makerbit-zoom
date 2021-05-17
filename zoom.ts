@@ -52,6 +52,7 @@ namespace makerbit {
     interface Clock {
       time: string;
       date: string;
+      timeZone: string;
       lastTimeUpdate: number;
     }
 
@@ -79,8 +80,7 @@ namespace makerbit {
     const CONNECTION_TOPIC = "$ESP/connection";
     const DEVICE_TOPIC = "$ESP/device";
     const ERROR_TOPIC = "$ESP/error";
-    const TIME_TOPIC = "$ESP/time";
-    const DATE_TOPIC = "$ESP/date";
+    const DATETIME_TOPIC = "$ESP/date-time";
     const TRANSMISSION_CONTROL_TOPIC = "$ESP/tc";
 
     let espState: EspState = undefined;
@@ -168,19 +168,14 @@ namespace makerbit {
           espState.device = getFirstToken(value);
         } else if (topic === TRANSMISSION_CONTROL_TOPIC) {
           espState.transmissionControl = value === "1";
-        } else if (topic === TIME_TOPIC || topic === DATE_TOPIC) {
-          if (!espState.clock) {
-            espState.clock = {
-              time: "00:00:00",
-              date: "0000-00-00",
-              lastTimeUpdate: 0,
-            };
-          }
-          if (topic === TIME_TOPIC) {
-            espState.clock.time = value;
-            espState.clock.lastTimeUpdate = control.millis();
-          } else {
-            espState.clock.date = value;
+        } else if (topic === DATETIME_TOPIC) {
+          if (espState.clock) {
+            const dateTime = value.split(" ");
+            if (dateTime.length == 2) {
+              espState.clock.lastTimeUpdate = control.millis();
+              espState.clock.date = dateTime[0];
+              espState.clock.time = dateTime[1];
+            }
           }
         }
       }
@@ -376,16 +371,11 @@ namespace makerbit {
       espState.subscriptions.push(new Subscription(CONNECTION_TOPIC, handler));
     }
 
-    function getDate(timezone: string): void {
-      autoConnectToESP();
-      const msg = ["date ", timezone, "\n"].join("");
-      serialWriteString(msg);
-    }
-
-    function refreshTimeNetwork(timezone: string): void {
-      autoConnectToESP();
-      const msg = ["time ", timezone, "\n"].join("");
-      serialWriteString(msg);
+    function requestDateTimeUpdate(): void {
+      if (espState.clock) {
+        const msg = ["date-time ", espState.clock.timeZone, "\n"].join("");
+        serialWriteString(msg);
+      }
     }
 
     function toSeconds(timeString: string): number {
@@ -428,24 +418,50 @@ namespace makerbit {
       return toTime(newSecs);
     }
 
+    function initClock(timeZone: string = null) {
+      if (!espState.clock) {
+        espState.clock = {
+          time: "00:00:00",
+          date: "0000-00-00",
+          timeZone: timeZone ? timeZone : "UTC0",
+          lastTimeUpdate: -1,
+        };
+      }
+      if (
+        espState.clock.lastTimeUpdate < 0 &&
+        espState.connectionStatus >= ZoomConnectionStatus.INTERNET
+      ) {
+        espState.clock.lastTimeUpdate = 0
+        requestDateTimeUpdate();
+      }
+    }
+
     /**
      * Returns the time.
      */
     //% subcategory="Zoom"
     //% blockId=makerbit_zoom_time
-    //% block="time in timezone %timezone=makerbit_helper_timezone"
+    //% block="time"
     //% weight=56
-    export function getTime(timeZone: string): string {
+    export function getTime(): string {
       autoConnectToESP();
-      if (
-        !espState.clock &&
-        espState.connectionStatus >= ZoomConnectionStatus.INTERNET
-      ) {
-        refreshTimeNetwork(timeZone);
-        basic.pause(1000);
-      }
+      initClock();
       return calculateTime();
     }
+
+    /**
+     * Returns the time.
+     */
+    //% subcategory="Zoom"
+    //% blockId=makerbit_zoom_time
+    //% block="date"
+    //% weight=55
+    export function getDate(): string {
+      autoConnectToESP();
+      initClock();
+      return espState.clock.date;
+    }
+
 
     function offsetToTimeZone(hours: number, minutes: number): string {
       // e.g. Kabul <+0430>-4:30
@@ -472,13 +488,28 @@ namespace makerbit {
      * Returns the time with an offset from UTC.
      */
     //% subcategory="Zoom"
-    //% blockId=makerbit_zoom_time_offset
-    //% block="time with UTC offset of %hours hours and %minutes minutes"
+    //% blockId=makerbit_zoom_set_time_zone_with_utc_offset
+    //% block="set time zone with UTC offset of %hours hours and %minutes minutes"
     //% hours.min=-12 hours.max=14
     //% minutes.min=0 minutes.max=59
-    //% weight=55
-    export function getTimeWithUtcOffset(hours: number, minutes: number): string {
-      return getTime(offsetToTimeZone(hours, minutes));
+    //% weight=53
+    export function setTimeZoneWithUtcOffset(hours: number, minutes: number): void {
+      setTimeZone(offsetToTimeZone(hours, minutes));
+    }
+
+
+    /**
+     * Returns the time.
+     */
+    //% subcategory="Zoom"
+    //% blockId=makerbit_zoom_set_time_zone
+    //% block="time in %timezone=makerbit_helper_timezone time zone"
+    //% weight=52
+    export function setTimeZone(timeZone: string): void {
+      autoConnectToESP();
+      initClock(timeZone);
+      espState.clock.timeZone = timeZone;
+      requestDateTimeUpdate();
     }
 
 
@@ -624,9 +655,11 @@ namespace makerbit {
           background.Mode.Repeat
         );
 
+        // TODO ESP should send the connection-status automatically every mintues -> save memory on microbit
         background.schedule(
           () => {
             serialWriteString("connection-status\n");
+            requestDateTimeUpdate();
           },
           62000,
           background.Mode.Repeat
@@ -833,3 +866,4 @@ namespace makerbit {
     }
   }
 }
+

@@ -22,28 +22,32 @@ const enum TimeZone {
   Asia_Tokyo
 }
 
-/**
-  * Turns a time zone id into a string that describes the timezone.
-  */
-//% blockId=makerbit_helper_timezone
-//% block="%timezone"
-//% blockHidden=true
-function timezone(timezone: TimeZone): string {
-  // https://github.com/esp8266/Arduino/blob/master/cores/esp8266/TZ.h
-  switch (timezone) {
-    case TimeZone.America_Los_Angeles: return "PST8PDT,M3.2.0,M11.1.0";
-    case TimeZone.Europe_Berlin: return "CET-1CEST,M3.5.0,M10.5.0/3";
-    case TimeZone.America_New_York: return "TZ_America_New_York";
-    case TimeZone.Asia_Tokyo: return "JST-9";
-    default:
-      return "UTC0";
-  }
-}
-
 
 //% color=#0fbc11 icon="\u272a" block="MakerBit"
 //% category="MakerBit"
 namespace makerbit {
+
+  /**
+    * Turns a time zone id into a string that describes the timezone.
+    */
+  //% blockId=makerbit_helper_timezone
+  //% block="%timezone"
+  //% blockHidden=true
+  export function timezone(timezone: TimeZone): string {
+    // https://github.com/esp8266/Arduino/blob/master/cores/esp8266/TZ.h
+    switch (timezone) {
+      case TimeZone.America_Los_Angeles: return "PST8PDT,M3.2.0,M11.1.0";
+      case TimeZone.Europe_Berlin: return "CET-1CEST,M3.5.0,M10.5.0/3";
+      case TimeZone.America_New_York: return "TZ_America_New_York";
+      case TimeZone.Asia_Tokyo: return "JST-9";
+      default:
+        return "UTC0";
+    }
+  }
+
+
+
+
   export namespace zoom {
     interface Clock {
       time: string;
@@ -67,15 +71,6 @@ namespace makerbit {
       obtainConnectionStatusJobId: number;
       transmissionControl: boolean;
       clock: Clock;
-    }
-
-    export namespace tz {
-      // https://github.com/esp8266/Arduino/blob/master/cores/esp8266/TZ.h
-      export const Europe_Berlin = "CET-1CEST,M3.5.0,M10.5.0/3";
-      export const America_Los_Angeles = "PST8PDT,M3.2.0,M11.1.0";
-      export const America_New_York = "TZ_America_New_York";
-      export const Asia_Tokyo = "JST-9";
-      export const UTC = "UTC0"; // Universal Time Coordinated
     }
 
     const STRING_TOPIC = "s_";
@@ -451,6 +446,49 @@ namespace makerbit {
       }
       return calculateTime();
     }
+
+    function offsetToTimeZone(hours: number, minutes: number): string {
+      // e.g. Kabul <+0430>-4:30
+      const pos = hours >= 0;
+      hours = Math.abs(Math.trunc(hours));
+      minutes = Math.abs(Math.trunc(minutes));
+
+      const tz = [
+        '<',
+        pos ? '+' : '-',
+        toTwoDigitString(hours),
+        toTwoDigitString(minutes),
+        '>',
+        pos ? '-' : '+',
+        toTwoDigitString(hours),
+        ':',
+        toTwoDigitString(minutes),
+      ].join("");
+
+      return tz;
+    }
+
+    /**
+     * Returns the time with an offset from UTC.
+     */
+    //% subcategory="Zoom"
+    //% blockId=makerbit_zoom_time_offset
+    //% block="time %hours %minutes"
+    //% hours.min=-12 hours.max=14
+    //% minutes.min=0 minutes.max=59
+    //% weight=55
+    export function getTimeWithUtcOffset(hours: number, minutes: number): string {
+      autoConnectToESP();
+      if (
+        !espState.clock &&
+        espState.connectionStatus >= ZoomConnectionStatus.INTERNET
+      ) {
+        refreshTimeNetwork(offsetToTimeZone(hours, minutes));
+        basic.pause(1000);
+      }
+      return calculateTime();
+    }
+
 
     /**
      * Configures the WiFi connection.

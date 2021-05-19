@@ -373,7 +373,7 @@ namespace makerbit {
 
     function requestDateTimeUpdate(): void {
       if (espState.clock) {
-        const msg = ["date-time ", espState.clock.timeZone, "\n"].join("");
+        const msg = ["date-time ", espState.clock.timeZone, " 600\n"].join("");
         serialWriteString(msg);
       }
     }

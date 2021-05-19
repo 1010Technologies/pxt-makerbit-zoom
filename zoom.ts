@@ -558,12 +558,12 @@ namespace makerbit {
                   background.remove(espState.obtainConnectionStatusJobId);
                 }
               },
-              850,
+              1150,
               background.Mode.Repeat
             );
           }
         },
-        300,
+        1000,
         background.Mode.Repeat
       );
     }
@@ -652,16 +652,6 @@ namespace makerbit {
         background.schedule(
           notifySubscriptionUpdates,
           20,
-          background.Mode.Repeat
-        );
-
-        // TODO ESP should send the connection-status automatically every mintues -> save memory on microbit
-        background.schedule(
-          () => {
-            serialWriteString("connection-status\n");
-            requestDateTimeUpdate();
-          },
-          62000,
           background.Mode.Repeat
         );
 

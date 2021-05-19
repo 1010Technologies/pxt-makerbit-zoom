@@ -643,7 +643,7 @@ namespace makerbit {
           wiFiPassword: "",
           obtainDeviceJobId: 0,
           obtainConnectionStatusJobId: 0,
-          transmissionControl: false,
+          transmissionControl: true,
           clock: undefined,
         };
 

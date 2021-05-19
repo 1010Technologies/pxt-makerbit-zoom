@@ -23,4 +23,7 @@ makerbit.zoom.onReceivedStringInChannel("name", (value: string) => { });
 makerbit.zoom.onConnectionStatus(() => { });
 makerbit.zoom.onError(() => { });
 
-makerbit.zoom.getTime(makerbit.zoom.tz.Europe_Berlin);
+makerbit.zoom.setTimeZone(makerbit.timezone(TimeZone.UTC));
+makerbit.zoom.setTimeZoneWithUtcOffset(-8,0);
+const time : string = makerbit.zoom.getTime();
+const date: string = makerbit.zoom.getDate();

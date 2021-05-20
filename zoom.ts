@@ -45,9 +45,6 @@ namespace makerbit {
     }
   }
 
-
-
-
   export namespace zoom {
     interface Clock {
       time: string;
@@ -405,7 +402,7 @@ namespace makerbit {
     }
 
     function calculateTime(): string {
-      if (!espState || !espState.clock) {
+      if (!espState || !espState.clock || espState.clock.date === "0000-00-00") {
         return "00:00:00";
       }
 

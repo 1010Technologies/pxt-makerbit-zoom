@@ -1,6 +1,6 @@
 {
     "name": "MakerBit-Zoom",
-    "version": "0.2.26",
+    "version": "1.0.0",
     "description": "MakeCode extension for Zoom",
     "license": "MIT",
     "dependencies": {

@@ -49,6 +49,7 @@ namespace makerbit {
     interface Clock {
       time: string;
       date: string;
+      weekday: number;
       timeZone: string;
       lastTimeUpdate: number;
     }
@@ -168,10 +169,11 @@ namespace makerbit {
         } else if (topic === DATETIME_TOPIC) {
           if (espState.clock) {
             const dateTime = value.split(" ");
-            if (dateTime.length == 2) {
+            if (dateTime.length == 3) {
               espState.clock.lastTimeUpdate = control.millis();
               espState.clock.date = dateTime[0];
               espState.clock.time = dateTime[1];
+              espState.clock.weekday = parseInt(dateTime[2]);
             }
           }
         }
@@ -420,6 +422,7 @@ namespace makerbit {
         espState.clock = {
           time: "00:00:00",
           date: "0000-00-00",
+          weekday: 0,
           timeZone: timeZone ? timeZone : "UTC0",
           lastTimeUpdate: -1,
         };
@@ -459,6 +462,18 @@ namespace makerbit {
       return espState.clock.date;
     }
 
+    /**
+     * Returns the weekday as a decimal number, where 0 is Sunday and 6 is Saturday.
+     */
+    //% subcategory="Time"
+    //% blockId=makerbit_zoom_weekday
+    //% block="weekday"
+    //% weight=54
+    export function getWeekday(): number {
+      autoConnectToESP();
+      initClock();
+      return espState.clock.weekday;
+    }
 
     function offsetToTimeZone(hours: number, minutes: number): string {
       // e.g. Kabul <+0430>-4:30

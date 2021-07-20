@@ -91,16 +91,16 @@ namespace makerbit {
       if (!value) {
         return "";
       }
-      return value.replaceAll(" ", "").replaceAll("/", "");
+      return value.replaceAll(" ", "").replaceAll("/", "").replaceAll("\"", "");
     }
 
-    function publish(name: string, value: string): void {
-      const msg = ["pub ", normalize(name), ' "', "" + value, '"\n'].join("");
+    function publish(topic: string, value: string): void {
+      const msg = ["pub ", normalize(topic), ' "', "" + value.replaceAll("\"", ""), '"\n'].join("");
       serialWriteString(msg);
     }
 
-    function subscribe(topic: string): void {
-      const msg = ["sub ", topic, '"\n'].join("");
+    function subscribe(normalizedTopic: string): void {
+      const msg = ["sub ", normalizedTopic, '"\n'].join("");
       serialWriteString(msg);
     }
 

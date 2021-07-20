@@ -91,7 +91,7 @@ namespace makerbit {
       if (!value) {
         return "";
       }
-      return value.replaceAll(" ", "");
+      return value.replaceAll(" ", "").replaceAll("/", "");
     }
 
     function publish(name: string, value: string): void {

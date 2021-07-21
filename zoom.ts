@@ -252,6 +252,11 @@ namespace makerbit {
                 message = message.concat(String.fromCharCode(r));
               } else {
                 message = "";
+                const errorSub = espState.subscriptions.find(sub => sub.topic === ERROR_TOPIC);
+                if (errorSub) {
+                  errorSub.setValue("71");
+                }
+                espState.lastError = 71;
               }
             }
           }

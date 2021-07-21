@@ -248,7 +248,7 @@ namespace makerbit {
               processSerialMessage(message);
               message = "";
             } else {
-              if (message.length < 64) {
+              if (message.length < 256) {
                 message = message.concat(String.fromCharCode(r));
               } else {
                 message = "";

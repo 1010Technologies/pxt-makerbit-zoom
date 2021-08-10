@@ -653,7 +653,7 @@ namespace makerbit {
           room: "1",
           connectionStatus: ZoomConnectionStatus.NONE,
           notifiedConnectionStatus: -1,
-          device: "",
+          device: "0.0.0",
           espRX: espRX,
           espTX: espTX,
           ssid: "",
@@ -712,7 +712,7 @@ namespace makerbit {
     //% blockHidden=true
     export function getDevice(): string {
       if (!espState) {
-        return "0";
+        return "0.0.0";
       }
       return espState.device;
     }

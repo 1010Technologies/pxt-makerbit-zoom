@@ -816,7 +816,7 @@ namespace makerbit {
     //% weight=97
     export function connectMeetingRoom(meeting: string, room: string): void {
       autoConnectToESP();
-      espState.room = room;
+      espState.room = normalize(room);
       espState.meeting = normalize(meeting);
       setMqttApplicationPrefix();
     }

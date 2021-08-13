@@ -1,4 +1,4 @@
-const enum ZoomConnectionStatus {
+const enum ZoomConnection {
   //% block="None"
   NONE = 0,
   //% block="ESP device"
@@ -59,8 +59,8 @@ namespace makerbit {
       lastError: number;
       meeting: string;
       room: string;
-      connectionStatus: number;
-      notifiedConnectionStatus: number;
+      connection: number;
+      notifiedConnection: number;
       device: string;
       espRX: DigitalPin;
       espTX: DigitalPin;
@@ -159,7 +159,7 @@ namespace makerbit {
         isExpectedTopic = true;
 
         if (topic === CONNECTION_TOPIC) {
-          espState.connectionStatus = parseInt(getFirstToken(value));
+          espState.connection = parseInt(getFirstToken(value));
         } else if (topic === ERROR_TOPIC) {
           espState.lastError = parseInt(getFirstToken(value));
         } else if (topic === DEVICE_TOPIC) {
@@ -434,7 +434,7 @@ namespace makerbit {
       }
       if (
         espState.clock.lastTimeUpdate < 0 &&
-        espState.connectionStatus >= ZoomConnectionStatus.INTERNET
+        espState.connection >= ZoomConnection.INTERNET
       ) {
         espState.clock.lastTimeUpdate = 0
         requestDateTimeUpdate();
@@ -569,7 +569,7 @@ namespace makerbit {
             // poll for intial connection status
             espState.obtainConnectionStatusJobId = background.schedule(
               () => {
-                if (espState.connectionStatus <= ZoomConnectionStatus.NONE) {
+                if (espState.connection <= ZoomConnection.NONE) {
                   serialWriteString("connection-status\n");
                 } else {
                   background.remove(espState.obtainConnectionStatusJobId);
@@ -651,8 +651,8 @@ namespace makerbit {
           lastError: 0,
           meeting: "" + randint(111111111, 999999999),
           room: "1",
-          connectionStatus: ZoomConnectionStatus.NONE,
-          notifiedConnectionStatus: -1,
+          connection: ZoomConnection.NONE,
+          notifiedConnection: -1,
           device: "0.0.0",
           espRX: espRX,
           espTX: espTX,
@@ -673,7 +673,7 @@ namespace makerbit {
         );
 
         // Always notify connection status NONE in the beginning
-        applyTopicUpdate(CONNECTION_TOPIC, "" + ZoomConnectionStatus.NONE);
+        applyTopicUpdate(CONNECTION_TOPIC, "" + ZoomConnection.NONE);
 
         getDeviceAndConnectionStatus();
       }
@@ -724,11 +724,11 @@ namespace makerbit {
     //% blockId="makerbit_zoom_get_connection_status"
     //% block="zoom connection"
     //% weight=89
-    export function getConnectionStatus(): ZoomConnectionStatus {
+    export function getConnectionStatus(): ZoomConnection {
       if (!espState) {
-        return ZoomConnectionStatus.NONE;
+        return ZoomConnection.NONE;
       }
-      return espState.connectionStatus;
+      return espState.connection;
     }
 
     function autoConnectToESP(): void {
@@ -829,12 +829,12 @@ namespace makerbit {
     //% blockId="makerbit_zoom_is_connected"
     //% block="zoom is connected to %state"
     //% weight=92
-    export function isConnected(status: ZoomConnectionStatus): boolean {
+    export function isConnected(status: ZoomConnection): boolean {
       if (!espState) {
         return false;
       }
       basic.pause(0); // Allow background processing to happen, even if called in a tight loop
-      return espState.connectionStatus >= status;
+      return espState.connection >= status;
     }
 
 
@@ -846,7 +846,7 @@ namespace makerbit {
     //% blockId="makerbit_zoom_wait_for_connection"
     //% block="zoom wait for connection to %state"
     //% weight=91
-    export function waitForConnection(status: ZoomConnectionStatus): void {
+    export function waitForConnection(status: ZoomConnection): void {
       while (!(makerbit.zoom.isConnected(status))) {
         basic.pause(200)
       }

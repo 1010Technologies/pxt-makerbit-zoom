@@ -1,10 +1,10 @@
 makerbit.zoom.connectESP(DigitalPin.P0, DigitalPin.P1);
 makerbit.zoom.connectWiFi("network", "secret");
 makerbit.zoom.connectMeetingRoom("123-456-789-0", "1");
-makerbit.zoom.waitForConnection(ZoomConnectionStatus.MEETING);
+makerbit.zoom.waitForConnection(ZoomConnection.MEETING);
 
 const isConnected: boolean = makerbit.zoom.isConnected(
-  ZoomConnectionStatus.MEETING
+  ZoomConnection.MEETING
 );
 const status: number = makerbit.zoom.getConnectionStatus();
 const error: number = makerbit.zoom.getLastError();

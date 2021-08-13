@@ -733,7 +733,7 @@ namespace makerbit {
 
     function autoConnectToESP(): void {
       if (!espState) {
-        makerbit.zoom.connectESP(DigitalPin.P0, DigitalPin.P1);
+        connectESPtoAnalogGrove3V()
       }
     }
 
@@ -852,7 +852,7 @@ namespace makerbit {
     //% block="zoom wait for connection to %state"
     //% weight=91
     export function waitForConnection(level: ZoomConnection): void {
-      while (!(makerbit.zoom.isConnected(level))) {
+      while (!(isConnected(level))) {
         basic.pause(200)
       }
     }

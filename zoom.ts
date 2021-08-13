@@ -853,7 +853,7 @@ namespace makerbit {
     //% weight=91
     export function waitForConnection(level: ZoomConnection): void {
       while (!(isConnected(level))) {
-        basic.pause(200)
+        basic.pause(200);
       }
     }
 

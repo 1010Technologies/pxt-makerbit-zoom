@@ -364,13 +364,13 @@ namespace makerbit {
     }
 
     /**
-     * Do something when the connection status changes.
+     * Do something when the connection level changes.
      */
     //% subcategory="Zoom"
-    //% blockId="makerbit_zoom_on_connection_status"
-    //% block="on zoom connection status"
+    //% blockId="makerbit_zoom_on_connection"
+    //% block="on zoom connection"
     //% weight=30
-    export function onConnectionStatus(handler: () => void): void {
+    export function onConnection(handler: () => void): void {
       autoConnectToESP();
       espState.subscriptions.push(new Subscription(CONNECTION_TOPIC, handler));
     }
@@ -672,7 +672,7 @@ namespace makerbit {
           background.Mode.Repeat
         );
 
-        // Always notify connection status NONE in the beginning
+        // Always notify connection level NONE in the beginning
         applyTopicUpdate(CONNECTION_TOPIC, "" + ZoomConnection.NONE);
 
         getDeviceAndConnectionStatus();
@@ -718,13 +718,13 @@ namespace makerbit {
     }
 
     /**
-     * Returns the connection status.
+     * Returns the connection level.
      */
     //% subcategory="Zoom"
-    //% blockId="makerbit_zoom_get_connection_status"
+    //% blockId="makerbit_zoom_get_connection"
     //% block="zoom connection"
     //% weight=89
-    export function getConnectionStatus(): ZoomConnection {
+    export function getConnection(): ZoomConnection {
       if (!espState) {
         return ZoomConnection.NONE;
       }
@@ -829,12 +829,12 @@ namespace makerbit {
     //% blockId="makerbit_zoom_is_connected"
     //% block="zoom is connected to %state"
     //% weight=92
-    export function isConnected(status: ZoomConnection): boolean {
+    export function isConnected(level: ZoomConnection): boolean {
       if (!espState) {
         return false;
       }
       basic.pause(0); // Allow background processing to happen, even if called in a tight loop
-      return espState.connection >= status;
+      return espState.connection >= level;
     }
 
 
@@ -846,8 +846,8 @@ namespace makerbit {
     //% blockId="makerbit_zoom_wait_for_connection"
     //% block="zoom wait for connection to %state"
     //% weight=91
-    export function waitForConnection(status: ZoomConnection): void {
-      while (!(makerbit.zoom.isConnected(status))) {
+    export function waitForConnection(level: ZoomConnection): void {
+      while (!(makerbit.zoom.isConnected(level))) {
         basic.pause(200)
       }
     }

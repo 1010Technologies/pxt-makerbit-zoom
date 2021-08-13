@@ -6,7 +6,7 @@ makerbit.zoom.waitForConnection(ZoomConnection.MEETING);
 const isConnected: boolean = makerbit.zoom.isConnected(
   ZoomConnection.MEETING
 );
-const status: number = makerbit.zoom.getConnectionStatus();
+const status: number = makerbit.zoom.getConnection();
 const error: number = makerbit.zoom.getLastError();
 const device: string = makerbit.zoom.getDevice();
 
@@ -21,7 +21,7 @@ makerbit.zoom.onReceivedString((value: string) => { });
 makerbit.zoom.onReceivedScreenshot((screenshot: Image) => { });
 makerbit.zoom.onReceivedNumberInChannel("compass", (value: number) => { });
 makerbit.zoom.onReceivedStringInChannel("name", (value: string) => { });
-makerbit.zoom.onConnectionStatus(() => { });
+makerbit.zoom.onConnection(() => { });
 makerbit.zoom.onError(() => { });
 
 makerbit.zoom.setTimeZone(makerbit.timezone(TimeZone.UTC));

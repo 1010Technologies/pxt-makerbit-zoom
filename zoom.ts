@@ -538,7 +538,7 @@ namespace makerbit {
     //% subcategory="Zoom"
     //% blockId="makerbit_zoom_connect_wifi"
     //% block="zoom connect to WiFi network %ssid | and password %password"
-    //% weight=98
+    //% weight=96
     export function connectWiFi(ssid: string, password: string): void {
       autoConnectToESP();
       espState.ssid = ssid;
@@ -694,7 +694,7 @@ namespace makerbit {
     //% subcategory="Zoom"
     //% blockId="makerbit_zoom_get_last_error"
     //% block="zoom error"
-    //% weight=89
+    //% weight=88
     export function getLastError(): number {
       if (!espState) {
         return 0;
@@ -708,7 +708,7 @@ namespace makerbit {
     //% subcategory="Zoom"
     //% blockId="makerbit_zoom_get_device"
     //% block="zoom device version"
-    //% weight=88
+    //% weight=87
     //% blockHidden=true
     export function getDevice(): string {
       if (!espState) {
@@ -723,7 +723,7 @@ namespace makerbit {
     //% subcategory="Zoom"
     //% blockId="makerbit_zoom_get_connection_status"
     //% block="zoom connection"
-    //% weight=90
+    //% weight=89
     export function getConnectionStatus(): ZoomConnectionStatus {
       if (!espState) {
         return ZoomConnectionStatus.NONE;
@@ -813,7 +813,7 @@ namespace makerbit {
     //% block="zoom connect to meeting %meeting and room %room"
     //% meetingId.defl=123-456-7890
     //% room.defl=1
-    //% weight=97
+    //% weight=95
     export function connectMeetingRoom(meeting: string, room: string): void {
       autoConnectToESP();
       espState.room = normalize(room);
@@ -828,13 +828,28 @@ namespace makerbit {
     //% subcategory="Zoom"
     //% blockId="makerbit_zoom_is_connected"
     //% block="zoom is connected to %state"
-    //% weight=91
+    //% weight=92
     export function isConnected(status: ZoomConnectionStatus): boolean {
       if (!espState) {
         return false;
       }
       basic.pause(0); // Allow background processing to happen, even if called in a tight loop
       return espState.connectionStatus >= status;
+    }
+
+
+    /**
+     * Returns true if the specified connection level is reached or exceeded.
+     * False otherwise.
+     */
+    //% subcategory="Zoom"
+    //% blockId="makerbit_zoom_wait_for_connection"
+    //% block="zoom wait for connection to %state"
+    //% weight=91
+    export function waitForConnection(status: ZoomConnectionStatus): void {
+      while (!(makerbit.zoom.isConnected(status))) {
+        basic.pause(200)
+      }
     }
 
     function setMqttApplicationPrefix() {

@@ -852,6 +852,8 @@ namespace makerbit {
     //% block="zoom wait for connection to %state"
     //% weight=91
     export function waitForConnection(level: ZoomConnection): void {
+      autoConnectToESP();
+
       while (!(isConnected(level))) {
         basic.pause(200);
       }

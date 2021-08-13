@@ -830,9 +830,14 @@ namespace makerbit {
     //% block="zoom is connected to %state"
     //% weight=92
     export function isConnected(level: ZoomConnection): boolean {
+      if (level === ZoomConnection.NONE) {
+        return true;
+      }
+
       if (!espState) {
         return false;
       }
+
       basic.pause(0); // Allow background processing to happen, even if called in a tight loop
       return espState.connection >= level;
     }

@@ -80,6 +80,7 @@ namespace makerbit {
     const ERROR_TOPIC = "$ESP/error";
     const DATETIME_TOPIC = "$ESP/date-time";
     const TRANSMISSION_CONTROL_TOPIC = "$ESP/tc";
+    const INVALID_DEVICE_VERSION = "0.0.0";
 
     let espState: EspState = undefined;
 
@@ -561,7 +562,7 @@ namespace makerbit {
       // poll for device version
       espState.obtainDeviceJobId = background.schedule(
         () => {
-          if (espState.device.isEmpty()) {
+          if (espState.device === INVALID_DEVICE_VERSION) {
             serialWriteString("device\n");
           } else {
             background.remove(espState.obtainDeviceJobId);
@@ -653,7 +654,7 @@ namespace makerbit {
           room: "1",
           connection: ZoomConnection.NONE,
           notifiedConnection: -1,
-          device: "0.0.0",
+          device: INVALID_DEVICE_VERSION,
           espRX: espRX,
           espTX: espTX,
           ssid: "",
@@ -712,7 +713,7 @@ namespace makerbit {
     //% blockHidden=true
     export function getDevice(): string {
       if (!espState) {
-        return "0.0.0";
+        return INVALID_DEVICE_VERSION;
       }
       return espState.device;
     }
